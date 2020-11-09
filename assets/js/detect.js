@@ -4,25 +4,37 @@
     await faceapi.nets.faceExpressionNet.loadFromUri('./assets/face-api/weights');
 
 
-    const image = document.querySelector('img');
-    const canvas = faceapi.createCanvasFromMedia(image);
-    const detection = await faceapi.detectAllFaces(image, new faceapi.TinyFaceDetectorOptions())
-                                    .withFaceLandmarks()
-                                    .withFaceExpressions();
+    const video = document.getElementById('video');
+    const stream = await navigator.mediaDevices.getUserMedia({ video: {} })
+    video.srcObject = stream
 
-    const dimensions = {
-        height: image.height,
-        width: image.width,
-    }
+    video.addEventListener('play',() =>{
+        const canvas = faceapi.createCanvasFromMedia(video);
+        document.getElementById("can").append(canvas);
 
-    const resizedDimensions = faceapi.resizeResults(detection,dimensions);
+        const dimensions = {
+            width: video.width,
+            height: video.height,
+        }
+        faceapi.matchDimensions(canvas, dimensions)
 
-    faceapi.draw.drawDetections(canvas, resizedDimensions);
-    faceapi.draw.drawFaceLandmarks(canvas, resizedDimensions);
-    faceapi.draw.drawFaceExpressions(canvas, resizedDimensions);
+        setInterval(async () =>{
+            const detection = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                                        // .withFaceLandmarks()
+                                        .withFaceExpressions();
 
+            const resizedDimensions = faceapi.resizeResults(detection,dimensions);
 
-    const url = canvas.toDataURL();
-    image.src = url;
+            canvas
+                .getContext('2d')
+                .clearRect(0, 0, canvas.width, canvas.height)
+
+            faceapi.draw.drawDetections(canvas, resizedDimensions);
+            // faceapi.draw.drawFaceLandmarks(canvas, resizedDimensions);
+            faceapi.draw.drawFaceExpressions(canvas, resizedDimensions);
+        },100);
+        
+    })
+    
 
 })();
